@@ -53,6 +53,10 @@ Tests require Neovim only and use fixtures, never live authentication.
 
 ## Try before approving
 
-Run scripts/demo.sh in a terminal. For local provider modules set ISSUE_PROVIDERS_ROOT to their checkout; otherwise install the github oscm extension. To include the review bridge, set REVIEW_MODE_ROOT to a review-mode checkout.
+Run `scripts/demo.sh OWNER/REPO ISSUE_NUMBER` in a terminal, selecting your own repository and issue. For local provider modules set ISSUE_PROVIDERS_ROOT to their checkout; otherwise install the github oscm extension. To include the review bridge, set REVIEW_MODE_ROOT to a review-mode checkout.
 
-The demo uses existing gh authentication to read and search public cli/cli issues. It runs with isolated editor configuration and cache. Keys gI/gO/gS/gH show live reads, offline reads, search and health checks; gR exercises the review bridge when supplied. No installed editor configuration changes.
+The demo uses existing gh authentication to read and search the selected repository. It has no default public repository or issue. The optional review bridge uses a clearly isolated sample diff; it does not claim that the sample belongs to your PR. It runs with isolated editor configuration and cache. Keys gI/gO/gS/gH show live reads, offline reads, search and health checks; gR exercises the review bridge when supplied. No installed editor configuration changes.
+
+Issue previews show readable UTC fetch times and distinguish saved snapshots
+from live reads. A failed refresh is visible in the preview. The preview receives
+focus for scrolling; `q` closes it and returns to the review window.

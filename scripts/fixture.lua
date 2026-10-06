@@ -17,7 +17,7 @@ issues.register("fixture", {
 		callback({
 			schema = "issue-provider.response.v1",
 			issue = { key = request.key, title = "Issue context", body = "Acceptance criteria" },
-			cache = { source = "cache", fetchedAt = 42, stale = true },
+			cache = { source = "cache", fetchedAt = 42, stale = true, refreshUnavailable = true },
 		})
 	end,
 })
@@ -125,7 +125,12 @@ vim.lsp.util.open_floating_preview = function(lines)
 end
 issues.setup({ provider = "fixture" })
 issues.view("EX-1", { root = vim.uv.cwd(), offline = true })
-assert(#previews == 1 and table.concat(previews[1], "\n"):find("stale snapshot"))
+assert(#previews == 1)
+local text = table.concat(previews[1], "\n")
+assert(text:find("stale snapshot") and text:find("Live refresh unavailable", 1, true))
+assert(text:find("1970-01-01 00:00 UTC", 1, true), "timestamps must be readable and timezone explicit")
+assert(text:find("Assignee: unassigned", 1, true))
+assert(text:find("does not confirm current login", 1, true))
 issues.view("EX-1", {
 	root = vim.uv.cwd(),
 	current = function()
@@ -134,6 +139,11 @@ issues.view("EX-1", {
 })
 assert(#previews == 1)
 vim.lsp.util.open_floating_preview = preview
+local review_win = vim.api.nvim_get_current_win()
+issues.view("EX-1", { root = vim.uv.cwd() })
+assert(vim.api.nvim_win_get_config(vim.api.nvim_get_current_win()).relative ~= "", "Issue preview must receive focus for scrolling and q")
+vim.api.nvim_feedkeys("q", "x", false)
+assert(vim.api.nvim_get_current_win() == review_win, "q must return to the review window")
 
 print(
 	"issues fixture: optional loading, per-project selection, command contract, stale provenance and invalid responses passed"

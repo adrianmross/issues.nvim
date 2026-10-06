@@ -221,24 +221,45 @@ end
 
 local function show(response)
 	local issue, cache = response.issue, response.cache or {}
+	local function display(value, fallback)
+		return value and value ~= "" and tostring(value) or fallback
+	end
+	local fetched = "unknown"
+	if type(cache.fetchedAt) == "number" then
+		-- Provider timestamps are Unix seconds; explicitly format them in UTC.
+		local ok, value = pcall(os.date, "!%Y-%m-%d %H:%M UTC", cache.fetchedAt)
+		if ok then
+			fetched = value
+		end
+	end
 	local lines = {
 		"# " .. issue.key .. ": " .. issue.title,
 		"",
-		"Status: " .. tostring(issue.status or "unknown"),
-		"Assignee: " .. tostring(issue.assignee or "unassigned"),
-		"Source: " .. tostring(cache.source or "provider") .. (cache.stale and " (stale snapshot)" or ""),
-		"Fetched: " .. tostring(cache.fetchedAt or "unknown"),
-		tostring(issue.url or ""),
-		"",
+		"Status: " .. display(issue.status, "unknown") .. " · Assignee: " .. display(issue.assignee, "unassigned"),
+		"Source: " .. display(cache.source, "provider") .. (cache.stale and " (stale snapshot)" or ""),
+		"Fetched: " .. fetched,
 	}
+	if cache.refreshUnavailable then
+		lines[#lines + 1] = "Live refresh unavailable; showing the saved snapshot."
+	end
+	if cache.source == "cache" or cache.stale then
+		lines[#lines + 1] = "Snapshot content does not confirm current login or issue status."
+	end
+	if issue.url and issue.url ~= "" then
+		lines[#lines + 1] = issue.url
+	end
+	lines[#lines + 1] = ""
 	vim.list_extend(lines, vim.split(issue.body or "", "\n", { plain = true }))
-	local bufnr = vim.lsp.util.open_floating_preview(lines, "markdown", {
+	local bufnr, win = vim.lsp.util.open_floating_preview(lines, "markdown", {
 		border = "rounded",
 		focusable = true,
-		max_width = math.floor(vim.o.columns * 0.75),
-		max_height = math.floor(vim.o.lines * 0.65),
+		max_width = math.floor(vim.o.columns * 0.85),
+		max_height = math.floor(vim.o.lines * 0.75),
 	})
 	vim.bo[bufnr].filetype = "markdown"
+	if win and vim.api.nvim_win_is_valid(win) then
+		vim.api.nvim_set_current_win(win)
+	end
 	vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = bufnr, silent = true })
 end
 
