@@ -1,0 +1,14 @@
+name: Test
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  fixture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          version: v0.11.0
+          neovim: true
+      - run: bash scripts/check.sh
